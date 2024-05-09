@@ -1,0 +1,18 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.IDE" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/blue</item>
+        <item name="colorPrimaryVariant">@color/blue</item>
+        <item name="android:statusBarColor">@color/blue</item>
+        <item name="android:windowBackground">@color/deep</item>
+
+        <!-- Cambiar el color del texto -->
+        <item name="android:textColor">@android:color/white</item>
+        <!-- Cambiar el color del hint -->
+        <item name="android:textColorHint">@color/light_gray</item>
+    </style>
+
+    <style name="Theme.IDE" parent="Base.Theme.IDE" />
+</resources>

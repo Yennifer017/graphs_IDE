@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">IDE</string>
+    <string name="options">Options</string>
+    <string name="execute">Ejecutar</string>
+    <string name="codeHint">Escribe el codigo aqui</string>
+    <string name="openFileDisp">Abrir proyecto</string>
+</resources>
