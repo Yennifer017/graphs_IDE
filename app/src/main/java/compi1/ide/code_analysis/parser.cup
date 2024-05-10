@@ -1,0 +1,384 @@
+package compi1.ide.code_analysis;
+
+import java_cup.runtime.*;
+import java.util.*;
+
+/*-----------------------------------------------------------
+  CUP Specification for the Parser Class
+  -----------------------------------------------------------*/
+parser code {:
+    //fields
+    Lexer lex;
+    private List<String> errors;
+
+
+    //conect the parser with the lexer
+    public Parser(Lexer lex){
+        super(lex);
+        errors = new LinkedList<>();
+    }
+
+    //getters
+    public Lexer getLexer(){
+        return this.lex;
+    }
+    public List<String> getErrors(){
+        return this.errors;
+    }
+
+    /*----------------------------------------------------
+                        METODOS DE ERROR
+    ------------------------------------------------------*/
+    public void syntax_error(Symbol cur_token) {
+        String mss = "Simbolo: " + symbl_name_from_id(cur_token.sym)
+                    + ", linea: " + cur_token.left
+                    + ", columna: " + cur_token.right;
+        if (expected_token_ids().isEmpty()) {
+            mss += " -- ya no se esperaba ningun simbolo";
+        }
+        errors.add(mss);
+    }
+
+    public void unrecovered_syntax_error(Symbol cur_token) {
+        errors.add("Errores de sintaxis severos detectados, revisa municiosamente el codigo");
+    }
+:}
+
+/*----------------------------------------------------
+     TYPES OF PRODUCCTIONS
+------------------------------------------------------*/
+/*TERMINALES*/
+terminal        IF, ELSE, FOR, WHILE, DO, TITLE, DESCRIPTION, KEYWORDS, HEADER, FOOTER, BACKGROUND, FONT_FAMILY, FONT_SIZE, COPYRIGHT, DATA, CATEGORY, VALUE,
+                COLOR, CHART, X_AXIS_L, Y_AXIS_L, LABEL, LEGEND_POS, X_DATA, Y_DATA, NAME, POINTS, LINE_STYLE, ICON, LINK, SIZE, DASHED_LINE, SOLID_LINE,
+                BOTTOM, TOP, RIGHT, LEFT, LLAVE_L, LLAVE_R, TWO_DOTS, CORCHETE_L, CORCHETE_R, COMA, DOT_COMA, PARENTESIS_L, PARENTESIS_R, ASIGNATOR,
+                TIMES, PLUS, DIV, MINUS, PLUS_PLUS, MINUS_MINUS, PLUS_EQUALS, MINUS_EQUALS, TIMES_EQUALS, DIV_EQUALS, EQUALS, DIFFERENT, MAYOR,
+                MAYOR_EQUALS, MENOR, MENOR_EQUALS ;
+
+terminal String  HEX_COLOR, STRING, VARIABLE;
+terminal Integer INTEGER;
+terminal Float  FLOAT;
+terminal boolean TRUE_B, FALSE_B;
+
+/*NO TERMINALES*/
+non terminal            instruction, code_inst, more_code, with_llaves,
+                        global_specification, more_global_specifications, global_single_specification, keywords_specification, keywords_names, more_key_words,
+                        chart_creation, elements_chart, specification_data, leyend_chart_op, leyend_chart_op_f,
+                        leyend_chart, specifications_leyend, specification, more_specifications,
+                        information_target, data_target, more_data_target,
+                        data_chart, specific_chart_data,
+                        chart_barras, more_values_barras, value_chart_barras, optional_color_b,
+                        chart_pie, more_values_pie, value_chart_pie, optional_color_pie,
+                        chart_points, more_values_points, value_chart_points, optional_point_c_data, options_pointc,
+                        chart_lines, more_values_lines, value_chart_lines, more_specific_data_line,
+                            specific_data_line, optional_data_lines,
+                            optional_values_lines, optional_attribute_linec,
+                        statement, internal_block,
+                        variable_statement, asignation, possible_values,
+                        condition,
+                        if_block, if_stmt, else_block,
+                        for_block, for_stmt, variable_definition, optional_increment,
+                        while_block, while_statement,
+                        do_while_block
+                        ;
+
+non terminal String     align_specification, lines_style_attr, pure_boolean_data, boolean_data, pure_string_data, string_data, all_acepted_data ;
+non terminal Integer    numeric_integer_data    ;
+non terminal Float      numeric_data, pure_numeric_data ;
+
+/*------------------------------------------------------
+                     THE GRAMMAR
+--------------------------------------------------------*/
+
+start with instruction;
+
+/********************************************************
+                ATRIBUTOS AGRUPADOS
+**********************************************************/
+
+align_specification ::= BOTTOM
+        | TOP
+        | RIGHT
+        | LEFT
+        ;
+
+lines_style_attr ::= DASHED_LINE
+		| SOLID_LINE
+		;
+
+pure_boolean_data ::= TRUE_B
+		| FALSE_B
+		;
+
+boolean_data ::= pure_boolean_data
+		| VARIABLE
+		;
+
+pure_numeric_data ::= INTEGER
+		| FLOAT
+		;
+
+numeric_data ::= pure_numeric_data
+		| VARIABLE
+		;
+
+numeric_integer_data ::= INTEGER
+		| VARIABLE
+		;
+
+pure_string_data ::= STRING
+		| align_specification
+		| lines_style_attr
+		| HEX_COLOR
+		;
+
+string_data ::= pure_string_data
+		| VARIABLE
+		;
+
+/********************************************************
+                INSTRUCCIONES GLOBALES
+**********************************************************/
+instruction ::= code_inst more_code
+        | with_llaves
+        ;
+
+code_inst ::= global_specification
+        | chart_creation
+        | statement
+		;
+
+more_code ::= code_inst more_code
+		| /* empty */
+		;
+
+with_llaves ::= LLAVE_L code_inst more_code LLAVE_R  ;
+
+
+/********************************************************
+                ESPECIFICACIONES DE ARCHIVO
+**********************************************************/
+global_specification ::= global_single_specification more_global_specifications ;
+more_global_specifications ::= COMA global_single_specification
+		| /* empty */
+		;
+
+global_single_specification ::= TITLE TWO_DOTS string_data
+		| DESCRIPTION TWO_DOTS string_data
+		| KEYWORDS TWO_DOTS keywords_specification
+		| HEADER TWO_DOTS LLAVE_L TITLE TWO_DOTS string_data LLAVE_R
+		| FOOTER TWO_DOTS LLAVE_L COPYRIGHT TWO_DOTS string_data LLAVE_R
+		| BACKGROUND TWO_DOTS HEX_COLOR
+		| FONT_FAMILY TWO_DOTS string_data
+		| FONT_SIZE string_data
+		;
+keywords_specification ::= CORCHETE_L keywords_names CORCHETE_R ;
+keywords_names ::= string_data more_key_words   ;
+more_key_words ::= COMA string_data more_key_words
+		| /* empty */
+        ;
+
+/********************************************************
+                CREACION DE GRAFICAS
+**********************************************************/
+
+/*solo una grafica*/
+chart_creation ::= LLAVE_L elements_chart LLAVE_R ;
+elements_chart ::= leyend_chart_op DATA TWO_DOTS specification_data leyend_chart_op_f ;
+specification_data ::= data_chart
+        | information_target
+        ;
+
+leyend_chart_op ::=  leyend_chart COMA
+		| /* empty */
+		;
+leyend_chart_op_f ::= COMA leyend_chart
+		| /*empty*/
+		;
+
+/*--------------LEYENDA PARA GRAFICAS -------------------*/
+leyend_chart ::= CHART TWO_DOTS LLAVE_L specifications_leyend LLAVE_R ;
+specifications_leyend ::= specification more_specifications ;
+specification ::= TITLE TWO_DOTS string_data
+		| X_AXIS_L TWO_DOTS string_data
+		| Y_AXIS_L TWO_DOTS string_data
+		| LEGEND_POS TWO_DOTS align_specification
+		;
+more_specifications ::= COMA specification more_specifications
+		| /* empty */
+		;
+
+/*----------------- TARJETA DE INFORMACION -------------------*/
+information_target ::= LLAVE_L data_target more_data_target LLAVE_R ;
+data_target ::= VALUE TWO_DOTS numeric_data
+		| LABEL TWO_DOTS string_data
+		| DESCRIPTION TWO_DOTS string_data
+		| ICON TWO_DOTS string_data
+		| COLOR TWO_DOTS HEX_COLOR
+		| LINK TWO_DOTS string_data
+		;
+more_data_target ::= COMA data_target more_data_target  ;
+
+/*----------------- DATOS PARA GRAFICAS -------------------*/
+data_chart ::= CORCHETE_L LLAVE_L specific_chart_data CORCHETE_R   ;
+specific_chart_data ::= chart_barras
+		| chart_pie
+		| chart_points
+		| chart_lines
+		;
+
+/****************** GRAFICA DE BARRAS   *********************/
+chart_barras ::= value_chart_barras more_values_barras  ;
+more_values_barras ::= COMA LLAVE_L value_chart_barras more_values_barras
+		| /* empty */
+		;
+
+value_chart_barras ::= CATEGORY TWO_DOTS string_data COMA VALUE TWO_DOTS numeric_data optional_color_b LLAVE_R  ;
+optional_color_b ::= COMA COLOR TWO_DOTS HEX_COLOR ;
+
+
+/****************** GRAFICA DE PASTEL   *********************/
+chart_pie ::= value_chart_pie more_values_pie   ;
+more_values_pie ::= COMA LLAVE_L value_chart_pie more_values_pie
+		| /* empty */
+		;
+
+value_chart_pie ::= LABEL TWO_DOTS string_data COMA VALUE TWO_DOTS numeric_data optional_color_pie LLAVE_R ;
+optional_color_pie ::= COMA COLOR TWO_DOTS HEX_COLOR    ;
+
+/*****************  GRAFICA DE PUNTOS   ***********************/
+chart_points ::= value_chart_points more_values_points  ;
+more_values_points ::= COMA LLAVE_L value_chart_points more_values_points
+		| /* empty */
+		;
+
+value_chart_points ::= X_DATA TWO_DOTS numeric_data COMA Y_DATA TWO_DOTS numeric_data optional_point_c_data LLAVE_R    ;
+
+optional_point_c_data ::= COMA options_pointc optional_point_c_data
+		| /* empty */
+		;
+
+options_pointc ::= SIZE TWO_DOTS numeric_integer_data
+		| COLOR TWO_DOTS HEX_COLOR
+		;
+
+
+/*****************  GRAFICA DE LINEAS   ***********************/
+chart_lines ::= value_chart_lines more_values_lines ;
+more_values_lines ::= COMA LLAVE_L value_chart_lines
+		| /* empty */
+		;
+
+value_chart_lines ::= NAME TWO_DOTS string_data COMA POINTS TWO_DOTS CORCHETE_L  specific_data_line more_specific_data_line CORCHETE_R optional_values_lines LLAVE_R ;
+
+more_specific_data_line ::= COMA specific_data_line more_specific_data_line
+		| /* empty */
+		;
+
+/*>>>>>>>>>>>>>>    DATOS   */
+specific_data_line ::= LLAVE_R X_DATA TWO_DOTS numeric_data COMA Y_DATA TWO_DOTS  numeric_data optional_data_lines CORCHETE_R ;
+
+optional_data_lines ::= COMA LABEL TWO_DOTS string_data
+		| /* empty */
+		;
+
+/*>>>>>>>>>>>>>>>   OTROS ATRIBUTOS */
+optional_values_lines ::= COMA optional_attribute_linec optional_values_lines
+		| /* empty */
+		;
+optional_attribute_linec ::= COLOR TWO_DOTS HEX_COLOR
+		| LINE_STYLE TWO_DOTS lines_style_attr
+		;
+
+
+/********************************************************
+                INSTRUCCIONES
+**********************************************************/
+statement ::= variable_statement DOT_COMA
+    | if_block
+	| for_block
+	| while_block
+	| do_while_block
+	;
+
+internal_block ::= chart_creation
+    | variable_statement
+    | /* empty */
+    ;
+
+/*--------------VARIABLES -------------------*/
+variable_statement ::= VARIABLE asignation
+    | VARIABLE PLUS_PLUS
+    | VARIABLE MINUS_MINUS
+    | VARIABLE PLUS_EQUALS numeric_data
+    | VARIABLE MINUS_EQUALS numeric_data
+    | VARIABLE TIMES_EQUALS numeric_data
+    | VARIABLE DIV_EQUALS numeric_data
+    ;
+
+asignation  ::= ASIGNATOR possible_values   ;
+possible_values ::= pure_numeric_data
+        | pure_numeric_data PLUS numeric_data
+		| pure_numeric_data MINUS numeric_data
+		| pure_numeric_data DIV numeric_data
+		| pure_numeric_data TIMES numeric_data
+		| pure_numeric_data PLUS_EQUALS numeric_data
+		| pure_string_data
+		| pure_boolean_data
+		| VARIABLE
+		| VARIABLE PLUS numeric_data
+		| VARIABLE MINUS numeric_data
+		| VARIABLE DIV numeric_data
+		| VARIABLE TIMES numeric_data
+		| VARIABLE PLUS_EQUALS numeric_data
+		;
+
+/*--------------CONDICIONALES -------------------*/
+condition ::= pure_boolean_data EQUALS boolean_data
+		| pure_boolean_data DIFFERENT boolean_data
+        | pure_string_data EQUALS string_data
+		| pure_string_data DIFFERENT string_data
+		| pure_numeric_data EQUALS numeric_data
+        | pure_numeric_data DIFFERENT numeric_data
+        | pure_numeric_data MAYOR numeric_data
+        | pure_numeric_data MAYOR_EQUALS numeric_data
+        | pure_numeric_data MENOR numeric_data
+        | pure_numeric_data MENOR_EQUALS numeric_data
+        | VARIABLE EQUALS pure_string_data
+        | VARIABLE EQUALS pure_numeric_data
+        | VARIABLE EQUALS VARIABLE
+        | VARIABLE EQUALS pure_boolean_data
+        | VARIABLE DIFFERENT pure_string_data
+        | VARIABLE DIFFERENT pure_numeric_data
+        | VARIABLE DIFFERENT VARIABLE
+        | VARIABLE DIFFERENT pure_boolean_data
+        | VARIABLE MAYOR numeric_data
+        | VARIABLE MAYOR_EQUALS numeric_data
+        | VARIABLE MENOR numeric_data
+        | VARIABLE MENOR_EQUALS numeric_data
+        ;
+
+/*--------------IF INSTRUCTION -------------------*/
+if_block ::= if_stmt LLAVE_L internal_block LLAVE_R else_block  ;
+if_stmt ::= IF PARENTESIS_L condition PARENTESIS_R ;
+
+else_block ::= ELSE LLAVE_L internal_block LLAVE_R
+	| /*empty*/
+	;
+
+/*--------------FOR INSTRUCTION -------------------*/
+for_block ::= for_stmt LLAVE_L internal_block LLAVE_R   ;
+for_stmt ::= FOR PARENTESIS_L variable_definition DOT_COMA condition DOT_COMA optional_increment PARENTESIS_R ;
+
+variable_definition ::= VARIABLE asignation
+		| /* emtpy */
+		;
+optional_increment ::= variable_statement
+		| /* empty */
+		;
+
+/*--------------WHILE INSTRUCTION -------------------*/
+while_block ::= while_statement LLAVE_L internal_block LLAVE_R  ;
+while_statement ::= WHILE PARENTESIS_L condition PARENTESIS_R   ;
+
+/*--------------DO-WHILE INSTRUCTION -------------------*/
+do_while_block ::= DO LLAVE_L internal_block LLAVE_R while_statement DOT_COMA   ;

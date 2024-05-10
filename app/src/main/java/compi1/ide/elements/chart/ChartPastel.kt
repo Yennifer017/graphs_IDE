@@ -1,4 +1,8 @@
 package compi1.ide.elements.chart
 
-class ChartPastel {
+import compi1.ide.elements.DataContainer
+import compi1.ide.elements.data.DataPastel
+
+class ChartPastel: DataContainer() {
+    var listData = arrayListOf<DataPastel>()
 }

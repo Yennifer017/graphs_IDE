@@ -4,4 +4,7 @@
     <string name="execute">Ejecutar</string>
     <string name="codeHint">Escribe el codigo aqui</string>
     <string name="openFileDisp">Abrir proyecto</string>
+    <string name="close">Close</string>
+    <string name="output_button">output button</string>
+    <string name="lineAndCol">C0:L0</string>
 </resources>
