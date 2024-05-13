@@ -3,44 +3,109 @@ package compi1.ide.code_analysis;
 import java_cup.runtime.*;
 import java.util.*;
 
+//arreglar imports
+import compi1.ide.elements.*;
+import compi1.ide.elements.chart.*;
+import compi1.ide.elements.data.*;
+import compi1.ide.elements.others.*;
+import compi1.ide.elements.statements.*;
+
 /*-----------------------------------------------------------
   CUP Specification for the Parser Class
   -----------------------------------------------------------*/
 parser code {:
     //fields
     Lexer lex;
-    private List<String> errors;
+    private List<String> syntaxErrors;
+    private List<String> semanticErrors;
+    private Project project;
+
+    private Executable executable;
+    private List<Executable> executablesList;
+    private List<Point> pointsList;
+    private Leyenda leyenda;
+    private DataLineas dataLineas;
+    private ChartLineas chartLineas;
 
 
     //conect the parser with the lexer
-    public Parser(Lexer lex){
+    public parser(Lexer lex){
         super(lex);
-        errors = new LinkedList<>();
+        syntaxErrors = new LinkedList<>();
+        semanticErrors = new LinkedList<>();
+        project = new Project();
+
+        leyenda = new Leyenda();
+        executablesList = new ArrayList<>();
+        pointsList = new ArrayList<>();
     }
 
     //getters
     public Lexer getLexer(){
         return this.lex;
     }
-    public List<String> getErrors(){
-        return this.errors;
+    public List<String> getSyntaxErrors(){
+        return this.syntaxErrors;
     }
+
+    public Project getProject(){
+        return this.project;
+    }
+
+    /*----------------------------------------------------
+                        UTIL METHODS
+    ------------------------------------------------------*/
+    private InformationTarget getInformationTarget(){
+        if(executable == null){
+            executable = new InformationTarget();
+        }
+        return (InformationTarget) executable;
+    }
+
+    private Symbol symbol(int left, int right, Object value, int type){
+        return new Symbol(type, left, right, value);
+    }
+
 
     /*----------------------------------------------------
                         METODOS DE ERROR
     ------------------------------------------------------*/
+    private final String NO_VAR_FOUND = "No se ha definido la variable";
+    private final String INCORRECT_TYPE_VAR = "El valor de la variable no pudo ser convertida al tipo adecuado";
+
     public void syntax_error(Symbol cur_token) {
         String mss = "Simbolo: " + symbl_name_from_id(cur_token.sym)
                     + ", linea: " + cur_token.left
-                    + ", columna: " + cur_token.right;
+                    + ", columna: " + cur_token.right
+                    + ", lexema: " + cur_token.value;
         if (expected_token_ids().isEmpty()) {
             mss += " -- ya no se esperaba ningun simbolo";
         }
-        errors.add(mss);
+        syntaxErrors.add(mss);
     }
 
     public void unrecovered_syntax_error(Symbol cur_token) {
-        errors.add("Errores de sintaxis severos detectados, revisa municiosamente el codigo");
+        syntaxErrors.add("Errores de sintaxis severos detectados, revisa municiosamente el codigo");
+    }
+
+    public void report_error(String message, Object info){
+        try{
+            Symbol cur_token = (Symbol) info;
+            String mss = "Simbolo: " + symbl_name_from_id(cur_token.sym)
+                        + ", linea: " + cur_token.left
+                        + ", columna: " + cur_token.right
+                        + ", lexema: " + cur_token.value
+                        + ", Info: " + message;
+            syntaxErrors.add(mss);
+            syntaxErrors.add(mss);
+        } catch (Exception e){
+            syntaxErrors.add(message);
+        }
+    }
+
+    private void addSemanticError(int left, int right, Object value, String message){
+        //inesperated error! but im lazy and i didnt change the function name
+        syntaxErrors.add(message + "-" + "linea:" + left + " columna:" + right + "-" + " Lexema=" + value);
     }
 :}
 
@@ -49,41 +114,49 @@ parser code {:
 ------------------------------------------------------*/
 /*TERMINALES*/
 terminal        IF, ELSE, FOR, WHILE, DO, TITLE, DESCRIPTION, KEYWORDS, HEADER, FOOTER, BACKGROUND, FONT_FAMILY, FONT_SIZE, COPYRIGHT, DATA, CATEGORY, VALUE,
-                COLOR, CHART, X_AXIS_L, Y_AXIS_L, LABEL, LEGEND_POS, X_DATA, Y_DATA, NAME, POINTS, LINE_STYLE, ICON, LINK, SIZE, DASHED_LINE, SOLID_LINE,
-                BOTTOM, TOP, RIGHT, LEFT, LLAVE_L, LLAVE_R, TWO_DOTS, CORCHETE_L, CORCHETE_R, COMA, DOT_COMA, PARENTESIS_L, PARENTESIS_R, ASIGNATOR,
+                COLOR, CHART, X_AXIS_L, Y_AXIS_L, LABEL, LEGEND_POS, X_DATA, Y_DATA, NAME, POINTS, LINE_STYLE, ICON, LINK, SIZE,
+                LLAVE_L, LLAVE_R, TWO_DOTS, CORCHETE_L, CORCHETE_R, COMA, DOT_COMA, PARENTESIS_L, PARENTESIS_R, ASIGNATOR,
                 TIMES, PLUS, DIV, MINUS, PLUS_PLUS, MINUS_MINUS, PLUS_EQUALS, MINUS_EQUALS, TIMES_EQUALS, DIV_EQUALS, EQUALS, DIFFERENT, MAYOR,
                 MAYOR_EQUALS, MENOR, MENOR_EQUALS ;
 
-terminal String  HEX_COLOR, STRING, VARIABLE;
+terminal String  HEX_COLOR, STRING, VARIABLE, DASHED_LINE, SOLID_LINE, BOTTOM, TOP, RIGHT, LEFT;
 terminal Integer INTEGER;
-terminal Float  FLOAT;
-terminal boolean TRUE_B, FALSE_B;
+terminal Float   FLOAT;
+terminal Boolean TRUE_B, FALSE_B;
 
 /*NO TERMINALES*/
 non terminal            instruction, code_inst, more_code, with_llaves,
                         global_specification, more_global_specifications, global_single_specification, keywords_specification, keywords_names, more_key_words,
-                        chart_creation, elements_chart, specification_data, leyend_chart_op, leyend_chart_op_f,
+                        elements_chart, specification_data, leyend_chart_op, leyend_chart_op_f,
                         leyend_chart, specifications_leyend, specification, more_specifications,
                         information_target, data_target, more_data_target,
                         data_chart, specific_chart_data,
                         chart_barras, more_values_barras, value_chart_barras, optional_color_b,
                         chart_pie, more_values_pie, value_chart_pie, optional_color_pie,
                         chart_points, more_values_points, value_chart_points, optional_point_c_data, options_pointc,
-                        chart_lines, more_values_lines, value_chart_lines, more_specific_data_line,
-                            specific_data_line, optional_data_lines,
+                        chart_lines, more_values_lines, more_specific_data_line,
                             optional_values_lines, optional_attribute_linec,
-                        statement, internal_block,
-                        variable_statement, asignation, possible_values,
-                        condition,
-                        if_block, if_stmt, else_block,
-                        for_block, for_stmt, variable_definition, optional_increment,
-                        while_block, while_statement,
+                        statement,
+                        if_block,
+                        for_block,
+                        while_block,
                         do_while_block
                         ;
 
-non terminal String     align_specification, lines_style_attr, pure_boolean_data, boolean_data, pure_string_data, string_data, all_acepted_data ;
-non terminal Integer    numeric_integer_data    ;
-non terminal Float      numeric_data, pure_numeric_data ;
+non terminal Point          optional_data_lines, specific_data_line;
+non terminal DataLineas     value_chart_lines;
+non terminal List<Executable>   internal_block, else_block;
+non terminal IfStmt         if_stmt;
+non terminal ForStmt        for_stmt;
+non terminal MutableValue   while_statement;
+non terminal Executable     chart_creation;
+non terminal Asignation     variable_statement, variable_definition, optional_increment;
+non terminal MutableValue   condition, numeric_operable_data, asignation, possible_values;
+non terminal Symbol     align_specification, lines_style_attr, string_data, boolean_data,
+                        numeric_integer_data, numeric_data, color_data;
+non terminal Symbol     pure_string_data;
+non terminal Symbol     pure_boolean_data;
+non terminal Symbol     pure_numeric_data ;
 
 /*------------------------------------------------------
                      THE GRAMMAR
@@ -95,45 +168,127 @@ start with instruction;
                 ATRIBUTOS AGRUPADOS
 **********************************************************/
 
-align_specification ::= BOTTOM
-        | TOP
-        | RIGHT
-        | LEFT
+align_specification ::= BOTTOM:v    {: RESULT=symbol(vleft, vright, v, sym.STRING); :}
+        | TOP:v                     {: RESULT=symbol(vleft, vright, v, sym.STRING); :}
+        | RIGHT:v                   {: RESULT=symbol(vleft, vright, v, sym.STRING); :}
+        | LEFT:v                    {: RESULT=symbol(vleft, vright, v, sym.STRING); :}
         ;
 
-lines_style_attr ::= DASHED_LINE
-		| SOLID_LINE
+lines_style_attr ::= DASHED_LINE:v  {: RESULT=symbol(vleft, vright, v, sym.STRING); :}
+	| SOLID_LINE:v              {: RESULT=symbol(vleft, vright, v, sym.STRING); :}
+	;
+
+pure_boolean_data ::= TRUE_B:v      {: RESULT=symbol(vleft, vright, v, sym.TRUE_B); :}
+		| FALSE_B:v         {: RESULT=symbol(vleft, vright, v, sym.TRUE_B); :}
 		;
 
-pure_boolean_data ::= TRUE_B
-		| FALSE_B
+boolean_data ::= pure_boolean_data:b    {: RESULT=b; :}
+        | VARIABLE:v                    {: RESULT=symbol(vleft, vright, v, sym.VARIABLE); :}
+        ;
+
+pure_numeric_data ::= INTEGER:v         {: RESULT=symbol(vleft, vright, v, sym.INTEGER); :}
+		| FLOAT:v               {: RESULT=symbol(vleft, vright, v, sym.FLOAT); :}
 		;
 
-boolean_data ::= pure_boolean_data
-		| VARIABLE
+numeric_data ::= pure_numeric_data:v    {: RESULT=v; :}
+	| VARIABLE:v                    {: RESULT=symbol(vleft, vright, v, sym.VARIABLE); :}
+	;
+
+numeric_integer_data ::= INTEGER:v      {: RESULT=symbol(vleft, vright, v, sym.INTEGER); :}
+        | VARIABLE:v                    {: RESULT=symbol(vleft, vright, v, sym.VARIABLE); :}
+        ;
+
+pure_string_data ::= STRING:v           {: RESULT=symbol(vleft, vright, v, sym.STRING); :}
+		| align_specification:v {: RESULT=v; :}
+		| lines_style_attr:v    {: RESULT=v; :}
+		| HEX_COLOR:v           {: RESULT=symbol(vleft, vright, v, sym.HEX_COLOR); :}
 		;
 
-pure_numeric_data ::= INTEGER
-		| FLOAT
+string_data ::= pure_string_data:s      {: RESULT=s; :}
+		| VARIABLE:v            {: RESULT=symbol(vleft, vright, v, sym.VARIABLE); :}
 		;
 
-numeric_data ::= pure_numeric_data
-		| VARIABLE
-		;
+color_data ::= HEX_COLOR:v              {: RESULT=symbol(vleft, vright, v, sym.HEX_COLOR); :}
+                | VARIABLE:v            {: RESULT=symbol(vleft, vright, v, sym.VARIABLE); :}
+                ;
 
-numeric_integer_data ::= INTEGER
-		| VARIABLE
-		;
-
-pure_string_data ::= STRING
-		| align_specification
-		| lines_style_attr
-		| HEX_COLOR
-		;
-
-string_data ::= pure_string_data
-		| VARIABLE
-		;
+numeric_operable_data ::= pure_numeric_data:v
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(v);
+                RESULT=mutable;
+            :}
+        | pure_numeric_data:n1 PLUS:o numeric_data:n2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(n1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.PLUS));
+                mutable.getSymbols().add(n2);
+                RESULT=mutable;
+            :}
+	| pure_numeric_data:n1 MINUS:o numeric_data:n2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(n1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.MINUS));
+                mutable.getSymbols().add(n2);
+                RESULT=mutable;
+            :}
+	| pure_numeric_data:n1 DIV:o numeric_data:n2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(n1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.DIV));
+                mutable.getSymbols().add(n2);
+                RESULT=mutable;
+            :}
+	| pure_numeric_data:n1 TIMES:o numeric_data:n2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(n1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.TIMES));
+                mutable.getSymbols().add(n2);
+                RESULT=mutable;
+            :}
+	| VARIABLE:v
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                RESULT=mutable;
+            :}
+	| VARIABLE:v PLUS:o numeric_data:n
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.PLUS));
+                mutable.getSymbols().add(n);
+                RESULT=mutable;
+            :}
+	| VARIABLE:v MINUS:o numeric_data:n
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.MINUS));
+                mutable.getSymbols().add(n);
+                RESULT=mutable;
+            :}
+	| VARIABLE:v DIV:o numeric_data:n
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.DIV));
+                mutable.getSymbols().add(n);
+                RESULT=mutable;
+            :}
+	| VARIABLE:v TIMES:o numeric_data:n
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.TIMES));
+                mutable.getSymbols().add(n);
+                RESULT=mutable;
+            :}
+        ;
 
 /********************************************************
                 INSTRUCCIONES GLOBALES
@@ -143,9 +298,19 @@ instruction ::= code_inst more_code
         ;
 
 code_inst ::= global_specification
-        | chart_creation
+        | chart_creation:e
+            {:
+                if(e != null){ //save data
+                    project.getData().add(e);
+                }
+            :}
         | statement
-		;
+        | error
+            {:
+                report_error("Se esperaba una creacion de grafica, una instruccion o una especificacion global",
+                cur_err_token());
+            :}
+	;
 
 more_code ::= code_inst more_code
 		| /* empty */
@@ -158,34 +323,56 @@ with_llaves ::= LLAVE_L code_inst more_code LLAVE_R  ;
                 ESPECIFICACIONES DE ARCHIVO
 **********************************************************/
 global_specification ::= global_single_specification more_global_specifications ;
-more_global_specifications ::= COMA global_single_specification
+more_global_specifications ::= COMA global_single_specification more_global_specifications
 		| /* empty */
 		;
 
-global_single_specification ::= TITLE TWO_DOTS string_data
-		| DESCRIPTION TWO_DOTS string_data
+global_single_specification ::= TITLE TWO_DOTS string_data:d        {:project.setTitle(d); :}
+		| DESCRIPTION TWO_DOTS string_data:d                {:project.setDescription(d); :}
 		| KEYWORDS TWO_DOTS keywords_specification
-		| HEADER TWO_DOTS LLAVE_L TITLE TWO_DOTS string_data LLAVE_R
-		| FOOTER TWO_DOTS LLAVE_L COPYRIGHT TWO_DOTS string_data LLAVE_R
-		| BACKGROUND TWO_DOTS HEX_COLOR
-		| FONT_FAMILY TWO_DOTS string_data
-		| FONT_SIZE string_data
+		| HEADER TWO_DOTS LLAVE_L TITLE TWO_DOTS string_data:d LLAVE_R      {:project.setHeader(d); :}
+		| FOOTER TWO_DOTS LLAVE_L COPYRIGHT TWO_DOTS string_data:d LLAVE_R  {:project.setFooter(d); :}
+		| BACKGROUND TWO_DOTS color_data:c                  {:project.setBackgroundColor(c); :}
+		| FONT_FAMILY TWO_DOTS string_data:d                {:project.setFontFamilyS(d); :}
+		| FONT_SIZE TWO_DOTS string_data:d                  {:project.setFontSizeS(d); :}
 		;
 keywords_specification ::= CORCHETE_L keywords_names CORCHETE_R ;
-keywords_names ::= string_data more_key_words   ;
-more_key_words ::= COMA string_data more_key_words
-		| /* empty */
-        ;
+keywords_names ::= string_data:d more_key_words                     {:project.getKeyWords().add(d); :}
+                ;
+more_key_words ::= COMA string_data:d more_key_words                {:project.getKeyWords().add(d); :}
+                | /* empty */
+                ;
 
 /********************************************************
                 CREACION DE GRAFICAS
 **********************************************************/
 
 /*solo una grafica*/
-chart_creation ::= LLAVE_L elements_chart LLAVE_R ;
-elements_chart ::= leyend_chart_op DATA TWO_DOTS specification_data leyend_chart_op_f ;
+chart_creation ::= LLAVE_L:l elements_chart LLAVE_R
+            {:
+                if(executable != null){ //save data
+                    if(executable instanceof DataContainer){
+                        DataContainer dataContainer = (DataContainer) executable;
+                        dataContainer.setLeyenda(leyenda);
+                    } else if (executable instanceof InformationTarget){
+                        InformationTarget infoT = (InformationTarget) executable;
+                        infoT.setLine(lright);
+                        infoT.setColumn(lleft);
+                    }
+                    RESULT = executable;
+                    executable = null;
+                    leyenda = new Leyenda();
+                }
+            :}
+
+        ;
+elements_chart ::= leyend_chart_op DATA TWO_DOTS specification_data leyend_chart_op_f
+        ;
 specification_data ::= data_chart
         | information_target
+        | error {:
+                    report_error("Se esperaba la creacion de una grafica o una targeta", cur_err_token());
+                :}
         ;
 
 leyend_chart_op ::=  leyend_chart COMA
@@ -193,30 +380,57 @@ leyend_chart_op ::=  leyend_chart COMA
 		;
 leyend_chart_op_f ::= COMA leyend_chart
 		| /*empty*/
+                | error leyend_chart {:
+                            report_error("Se esperaba una leyenda o fin de creacion", cur_err_token());
+                        :}
 		;
 
 /*--------------LEYENDA PARA GRAFICAS -------------------*/
-leyend_chart ::= CHART TWO_DOTS LLAVE_L specifications_leyend LLAVE_R ;
+leyend_chart ::= CHART TWO_DOTS LLAVE_L specifications_leyend LLAVE_R
+                ;
 specifications_leyend ::= specification more_specifications ;
-specification ::= TITLE TWO_DOTS string_data
-		| X_AXIS_L TWO_DOTS string_data
-		| Y_AXIS_L TWO_DOTS string_data
-		| LEGEND_POS TWO_DOTS align_specification
+specification ::= TITLE TWO_DOTS string_data:d          {: leyenda.setTitle(d); :}
+		| X_AXIS_L TWO_DOTS string_data:d       {: leyenda.setXAxisLabel(d);:}
+		| Y_AXIS_L TWO_DOTS string_data:d       {: leyenda.setYAxisLabel(d);:}
+		| LEGEND_POS TWO_DOTS align_specification:d     {: leyenda.setLegendPosition(d);:}
 		;
 more_specifications ::= COMA specification more_specifications
 		| /* empty */
+                | error specification more_specifications {: report_error("Se esperaba una coma", cur_err_token()); :}
 		;
 
 /*----------------- TARJETA DE INFORMACION -------------------*/
 information_target ::= LLAVE_L data_target more_data_target LLAVE_R ;
-data_target ::= VALUE TWO_DOTS numeric_data
-		| LABEL TWO_DOTS string_data
-		| DESCRIPTION TWO_DOTS string_data
-		| ICON TWO_DOTS string_data
-		| COLOR TWO_DOTS HEX_COLOR
-		| LINK TWO_DOTS string_data
+data_target ::= VALUE TWO_DOTS numeric_operable_data:n       {:
+                                                        InformationTarget infoT = getInformationTarget();
+                                                        infoT.setValue(n);
+                                                    :}
+		| LABEL TWO_DOTS string_data:s      {:
+                                                        InformationTarget infoT = getInformationTarget();
+                                                        infoT.setLabel(s);
+                                                    :}
+		| DESCRIPTION TWO_DOTS string_data:s    {:
+                                                        InformationTarget infoT = getInformationTarget();
+                                                        infoT.setDescription(s);
+                                                    :}
+		| ICON TWO_DOTS string_data:s       {:
+                                                        InformationTarget infoT = getInformationTarget();
+                                                        infoT.setIcon(s);
+                                                    :}
+		| COLOR TWO_DOTS color_data:c        {:
+                                                        InformationTarget infoT = getInformationTarget();
+                                                        infoT.setColor(c);
+                                                    :}
+		| LINK TWO_DOTS string_data:l       {:
+                                                        InformationTarget infoT = getInformationTarget();
+                                                        infoT.setLink(l);
+                                                    :}
+                | error {:
+                            report_error("Se esperaba una especificacion de targeta", cur_err_token());
+                        :}
 		;
-more_data_target ::= COMA data_target more_data_target  ;
+more_data_target ::= COMA data_target more_data_target
+                | /* empty */;
 
 /*----------------- DATOS PARA GRAFICAS -------------------*/
 data_chart ::= CORCHETE_L LLAVE_L specific_chart_data CORCHETE_R   ;
@@ -224,6 +438,9 @@ specific_chart_data ::= chart_barras
 		| chart_pie
 		| chart_points
 		| chart_lines
+                | error {:
+                            report_error("Se esperaba una especificaion de grafica", cur_err_token());
+                        :}
 		;
 
 /****************** GRAFICA DE BARRAS   *********************/
@@ -232,153 +449,766 @@ more_values_barras ::= COMA LLAVE_L value_chart_barras more_values_barras
 		| /* empty */
 		;
 
-value_chart_barras ::= CATEGORY TWO_DOTS string_data COMA VALUE TWO_DOTS numeric_data optional_color_b LLAVE_R  ;
-optional_color_b ::= COMA COLOR TWO_DOTS HEX_COLOR ;
+value_chart_barras ::= CATEGORY TWO_DOTS string_data:sc COMA VALUE TWO_DOTS numeric_operable_data:n optional_color_b LLAVE_R
+                {:
+                    if(executable == null){
+                        executable = new ChartBarras();
+                        ChartBarras chart = (ChartBarras) executable;
+                        DataBarras data = new DataBarras();
+                        data.setCategory(sc);
+                        data.setValue(n);
+                        chart.getDataBarras().add(data);
+                    } else {
+                        ChartBarras chart = (ChartBarras) executable;
+                        if(chart.getDataBarras().get(chart.getDataBarras().size()-1).getCategory() == null){
+                            //cuando ya esta inicializada
+                            chart.getDataBarras().get(chart.getDataBarras().size()-1).setCategory(sc);
+                            chart.getDataBarras().get(chart.getDataBarras().size()-1).setValue(n);
+                        } else {
+                            DataBarras data = new DataBarras();
+                            data.setCategory(sc);
+                            data.setValue(n);
+                            chart.getDataBarras().add(data);
+                        }
+                    }
+                :}
+                ;
+optional_color_b ::= COMA COLOR TWO_DOTS color_data:c
+                {:
+                    try{
+                        if(executable == null){
+                            executable = new ChartBarras();
+                        }
+                        ChartBarras chart = (ChartBarras) executable;
+                        DataBarras data = new DataBarras();
+                        data.setColor(c);
+                        chart.getDataBarras().add(data);
+                    } catch(NullPointerException | ClassCastException | IndexOutOfBoundsException e){
+                        addSemanticError(cleft, cright, c, e.toString());
+                    }
+                :}
+                | /* empty */
+                | error {:
+                            report_error("Se esperaba especificar un color", cur_err_token());
+                        :};
 
 
 /****************** GRAFICA DE PASTEL   *********************/
 chart_pie ::= value_chart_pie more_values_pie   ;
 more_values_pie ::= COMA LLAVE_L value_chart_pie more_values_pie
 		| /* empty */
+                | error error error {:
+                            report_error("Se esperaban mas datos de grafica de pastel", cur_err_token());
+                        :}
 		;
 
-value_chart_pie ::= LABEL TWO_DOTS string_data COMA VALUE TWO_DOTS numeric_data optional_color_pie LLAVE_R ;
-optional_color_pie ::= COMA COLOR TWO_DOTS HEX_COLOR    ;
+value_chart_pie ::= LABEL:lab TWO_DOTS string_data:l COMA VALUE TWO_DOTS numeric_operable_data:n optional_color_pie LLAVE_R
+                {:
+                    try{
+                        if(executable == null){
+                            executable = new ChartPastel();
+                            ChartPastel chart = (ChartPastel) executable;
+                            DataPastel data = new DataPastel();
+                            data.setLabel(l);
+                            data.setValue(n);
+                            chart.getDataPastel().add(data);
+                        } else {
+                            ChartPastel chart = (ChartPastel) executable;
+                            if(chart.getDataPastel().get(chart.getDataPastel().size()-1).getLabel() == null){
+                                //cuando ya esta inicializada
+                                chart.getDataPastel().get(chart.getDataPastel().size()-1).setLabel(l);
+                                chart.getDataPastel().get(chart.getDataPastel().size()-1).setValue(n);
+                            } else {
+                                DataPastel data = new DataPastel();
+                                data.setLabel(l);
+                                data.setValue(n);
+                                chart.getDataPastel().add(data);
+                            }
+                        }
+                    } catch(NullPointerException | ClassCastException | IndexOutOfBoundsException e){
+                        addSemanticError(lableft, labright, lab, e.toString());
+                    }
+                :}
+                ;
+optional_color_pie ::= COMA COLOR TWO_DOTS color_data:c
+                {:
+                    try{
+                        if(executable == null){
+                            executable = new ChartPastel();
+                        }
+                        ChartPastel chart = (ChartPastel) executable;
+                        DataPastel data = new DataPastel();
+                        data.setColor(c);
+                        chart.getDataPastel().add(data);
+                    } catch(NullPointerException | ClassCastException | IndexOutOfBoundsException e){
+                        addSemanticError(cleft, cright, c, e.toString());
+                    }
+                :}
+
+                | /* empty */
+                | error {:
+                            report_error("Se esperaba especificar un color", cur_err_token());
+                        :}
+                ;
 
 /*****************  GRAFICA DE PUNTOS   ***********************/
 chart_points ::= value_chart_points more_values_points  ;
 more_values_points ::= COMA LLAVE_L value_chart_points more_values_points
 		| /* empty */
+                | error error error {:
+                    report_error("Se esperaba mas datos para la grafica de puntos", cur_err_token());
+                :}
 		;
 
-value_chart_points ::= X_DATA TWO_DOTS numeric_data COMA Y_DATA TWO_DOTS numeric_data optional_point_c_data LLAVE_R    ;
+value_chart_points ::= X_DATA:inf TWO_DOTS numeric_operable_data:x COMA Y_DATA TWO_DOTS numeric_operable_data:y optional_point_c_data LLAVE_R
+                {:
+                    try{
+                        if(executable == null){
+                            executable = new ChartPuntos();
+                            ChartPuntos chart = (ChartPuntos) executable;
+                            DataPuntos data = new DataPuntos();
+                            data.setXData(x);
+                            data.setYData(y);
+                            data.setSaved(true);
+                            chart.getDataPuntos().add(data);
+                        } else {
+                            ChartPuntos chart = (ChartPuntos) executable;
+                            if(!chart.getDataPuntos().get(chart.getDataPuntos().size()-1).getSaved()){
+                                //cuando ya esta inicializada
+                                chart.getDataPuntos().get(chart.getDataPuntos().size()-1).setXData(x);
+                                chart.getDataPuntos().get(chart.getDataPuntos().size()-1).setYData(y);
+                                chart.getDataPuntos().get(chart.getDataPuntos().size()-1).setSaved(true);
+                            } else {
+                                DataPuntos data = new DataPuntos();
+                                data.setXData(x);
+                                data.setYData(y);
+                                data.setSaved(true);
+                                chart.getDataPuntos().add(data);
+                            }
+                        }
+                    } catch(NullPointerException | ClassCastException | IndexOutOfBoundsException e){
+                        addSemanticError(infleft, infright, inf, e.toString());
+                    }
+
+                :}
+            ;
 
 optional_point_c_data ::= COMA options_pointc optional_point_c_data
 		| /* empty */
 		;
 
-options_pointc ::= SIZE TWO_DOTS numeric_integer_data
-		| COLOR TWO_DOTS HEX_COLOR
-		;
+options_pointc ::= SIZE:s TWO_DOTS numeric_operable_data:n
+                {:
+                    try{
+                        if(executable == null){
+                            executable = new ChartPuntos();
+                            ChartPuntos chart = (ChartPuntos) executable;
+                            DataPuntos data = new DataPuntos();
+                            data.setSize(n);
+                            chart.getDataPuntos().add(data);
+                        } else {
+                            ChartPuntos chart = (ChartPuntos) executable;
+                            if(!chart.getDataPuntos().get(chart.getDataPuntos().size() - 1).getSaved()){
+                                //ya se creo la dada, agregando
+                                chart.getDataPuntos().get(chart.getDataPuntos().size() - 1).setSize(n);
+                            } else {
+                                //se debe inicializar una nueva data
+                                DataPuntos data = new DataPuntos();
+                                data.setSize(n);
+                                chart.getDataPuntos().add(data);
+                            }
+                        }
+                    } catch(NullPointerException | ClassCastException | IndexOutOfBoundsException e){
+                        addSemanticError(sleft, sright, s, e.toString());
+                    }
+                :}
+            | COLOR:cs TWO_DOTS color_data:c
+                {:
+                    try{
+                        if(executable == null){
+                            executable = new ChartPuntos();
+                            ChartPuntos chart = (ChartPuntos) executable;
+                            DataPuntos data = new DataPuntos();
+                            data.setColor(c);
+                            chart.getDataPuntos().add(data);
+                        } else {
+                            ChartPuntos chart = (ChartPuntos) executable;
+                            if(!chart.getDataPuntos().get(chart.getDataPuntos().size() - 1).getSaved()){
+                                //ya se creo la data, agregando
+                                chart.getDataPuntos().get(chart.getDataPuntos().size() - 1).setColor(c);
+                            } else {
+                                //se debe inicializar una nueva data
+                                DataPuntos data = new DataPuntos();
+                                data.setColor(c);
+                                chart.getDataPuntos().add(data);
+                            }
+                        }
+                    } catch(NullPointerException | ClassCastException | IndexOutOfBoundsException e){
+                        addSemanticError(csleft, csright, cs, e.toString());
+                    }
+                :}
+            ;
 
 
 /*****************  GRAFICA DE LINEAS   ***********************/
-chart_lines ::= value_chart_lines more_values_lines ;
-more_values_lines ::= COMA LLAVE_L value_chart_lines
-		| /* empty */
-		;
+chart_lines ::= value_chart_lines:d more_values_lines
+            {:
+                if(chartLineas == null){
+                    chartLineas = new ChartLineas();
+                }
+                chartLineas.getDataLineas().add(0,d);
+                executable = chartLineas;
+                chartLineas = null;
+            :}
+        ;
+more_values_lines ::= COMA LLAVE_L value_chart_lines:d
+            {:
+                if(chartLineas == null){
+                    chartLineas = new ChartLineas();
+                }
+                chartLineas.getDataLineas().add(0, d);
+            :}
+	| /* empty */
+        | error error error {:
+                    report_error("Se esperaban mas datos para el grafico de lineas", cur_err_token());
+                :}
+        ;
 
-value_chart_lines ::= NAME TWO_DOTS string_data COMA POINTS TWO_DOTS CORCHETE_L  specific_data_line more_specific_data_line CORCHETE_R optional_values_lines LLAVE_R ;
+value_chart_lines ::= NAME TWO_DOTS string_data:n COMA POINTS TWO_DOTS CORCHETE_L specific_data_line:p more_specific_data_line CORCHETE_R optional_values_lines LLAVE_R
+        {:
+            if(dataLineas == null){
+                dataLineas = new DataLineas();
+            }
+            dataLineas.setName(n);
+            pointsList.add(0, p);
+            dataLineas.setPoints(pointsList);
+            pointsList = new ArrayList<>();
+            RESULT = dataLineas;
+            dataLineas = null;
+        :}
+        ;
 
-more_specific_data_line ::= COMA specific_data_line more_specific_data_line
-		| /* empty */
-		;
+more_specific_data_line ::= COMA specific_data_line:p more_specific_data_line
+            {:
+                pointsList.add(0, p);
+            :}
+	| /* empty */
+        | error {:
+                    report_error("Se esperaban mas datos de la grafica de lineas", cur_err_token());
+                :}
+	;
 
 /*>>>>>>>>>>>>>>    DATOS   */
-specific_data_line ::= LLAVE_R X_DATA TWO_DOTS numeric_data COMA Y_DATA TWO_DOTS  numeric_data optional_data_lines CORCHETE_R ;
+specific_data_line ::= LLAVE_L X_DATA TWO_DOTS numeric_operable_data:x COMA Y_DATA TWO_DOTS  numeric_operable_data:y optional_data_lines:point LLAVE_R
+            {:
+                if(point == null){
+                    point = new Point();
+                }
+                point.setXData(x);
+                point.setYData(y);
+                RESULT = point;
+            :}
+        ;
 
-optional_data_lines ::= COMA LABEL TWO_DOTS string_data
-		| /* empty */
-		;
+optional_data_lines ::= COMA LABEL TWO_DOTS string_data:l
+            {:
+                Point point = new Point();
+                point.setLabel(l);
+                RESULT = point;
+            :}
+	| /* empty */
+	;
 
 /*>>>>>>>>>>>>>>>   OTROS ATRIBUTOS */
 optional_values_lines ::= COMA optional_attribute_linec optional_values_lines
 		| /* empty */
 		;
-optional_attribute_linec ::= COLOR TWO_DOTS HEX_COLOR
-		| LINE_STYLE TWO_DOTS lines_style_attr
-		;
+optional_attribute_linec ::= COLOR:cs TWO_DOTS color_data:c
+            {:
+                try{
+                    if(dataLineas == null){
+                        dataLineas = new DataLineas();
+                    }
+                    dataLineas.setColor(c);
+                } catch(NullPointerException | ClassCastException | IndexOutOfBoundsException e){
+                    addSemanticError(csleft, csright, cs, e.toString());
+                }
+            :}
+	| LINE_STYLE:cs TWO_DOTS lines_style_attr:s
+            {:
+                try{
+                    if(dataLineas == null){
+                        dataLineas = new DataLineas();
+                    }
+                    dataLineas.setColor(s);
+                } catch(NullPointerException | ClassCastException | IndexOutOfBoundsException e){
+                    addSemanticError(csleft, csright, cs, e.toString());
+                }
+            :}
+	;
 
 
 /********************************************************
                 INSTRUCCIONES
 **********************************************************/
-statement ::= variable_statement DOT_COMA
-    | if_block
+statement ::= variable_statement:a DOT_COMA
+            {:
+                project.getData().add(a);
+            :}
+        | if_block
 	| for_block
 	| while_block
 	| do_while_block
 	;
 
-internal_block ::= chart_creation
-    | variable_statement
+internal_block ::= chart_creation:e internal_block
+        {:
+            if(e != null){ //save data
+                //guardar en la lista
+                executablesList.add(0, e);
+            }
+            RESULT=executablesList;
+        :}
+    | variable_statement:v internal_block
+        {:
+            //add the executable to the list
+            executablesList.add(0, v);
+             RESULT=executablesList;
+        :}
     | /* empty */
+        {:
+             RESULT=executablesList;
+        :}
     ;
 
 /*--------------VARIABLES -------------------*/
-variable_statement ::= VARIABLE asignation
-    | VARIABLE PLUS_PLUS
-    | VARIABLE MINUS_MINUS
-    | VARIABLE PLUS_EQUALS numeric_data
-    | VARIABLE MINUS_EQUALS numeric_data
-    | VARIABLE TIMES_EQUALS numeric_data
-    | VARIABLE DIV_EQUALS numeric_data
+variable_statement ::= VARIABLE:v asignation:a
+        {:
+            Asignation asign = new Asignation();
+            asign.setVariable(symbol(vleft, vright, v, sym.VARIABLE));
+            asign.setValue(a);
+            RESULT = asign;
+        :}
+    | VARIABLE:v PLUS_PLUS:o
+        {:
+            Asignation asign = new Asignation();
+            asign.setVariable(symbol(vleft, vright, v, sym.VARIABLE));
+            MutableValue value = new MutableValue();
+            value.getSymbols().add(symbol(oleft, oright, o, sym.PLUS_PLUS));
+            asign.setValue(value);
+            RESULT = asign;
+        :}
+    | VARIABLE:v MINUS_MINUS:o
+        {:
+            Asignation asign = new Asignation();
+            asign.setVariable(symbol(vleft, vright, v, sym.VARIABLE));
+            MutableValue value = new MutableValue();
+            value.getSymbols().add(symbol(oleft, oright, o, sym.MINUS_MINUS));
+            asign.setValue(value);
+            RESULT = asign;
+        :}
+    | VARIABLE:v PLUS_EQUALS:o numeric_data:n
+        {:
+            Asignation asign = new Asignation();
+            asign.setVariable(symbol(vleft, vright, v, sym.VARIABLE));
+            MutableValue value = new MutableValue();
+            value.getSymbols().add(symbol(oleft, oright, o, sym.PLUS_EQUALS));
+            value.getSymbols().add(n);
+            asign.setValue(value);
+            RESULT = asign;
+        :}
+    | VARIABLE:v MINUS_EQUALS:o numeric_data:n
+        {:
+            Asignation asign = new Asignation();
+            asign.setVariable(symbol(vleft, vright, v, sym.VARIABLE));
+            MutableValue value = new MutableValue();
+            value.getSymbols().add(symbol(oleft, oright, o, sym.MINUS_EQUALS));
+            value.getSymbols().add(n);
+            asign.setValue(value);
+            RESULT = asign;
+        :}
+    | VARIABLE:v TIMES_EQUALS:o numeric_data:n
+        {:
+            Asignation asign = new Asignation();
+            asign.setVariable(symbol(vleft, vright, v, sym.VARIABLE));
+            MutableValue value = new MutableValue();
+            value.getSymbols().add(symbol(oleft, oright, o, sym.TIMES_EQUALS));
+            value.getSymbols().add(n);
+            asign.setValue(value);
+            RESULT = asign;
+        :}
+    | VARIABLE:v DIV_EQUALS:o numeric_data:n
+        {:
+            Asignation asign = new Asignation();
+            asign.setVariable(symbol(vleft, vright, v, sym.VARIABLE));
+            MutableValue value = new MutableValue();
+            value.getSymbols().add(symbol(oleft, oright, o, sym.DIV_EQUALS));
+            value.getSymbols().add(n);
+            asign.setValue(value);
+            RESULT = asign;
+        :}
     ;
 
-asignation  ::= ASIGNATOR possible_values   ;
-possible_values ::= pure_numeric_data
-        | pure_numeric_data PLUS numeric_data
-		| pure_numeric_data MINUS numeric_data
-		| pure_numeric_data DIV numeric_data
-		| pure_numeric_data TIMES numeric_data
-		| pure_numeric_data PLUS_EQUALS numeric_data
-		| pure_string_data
-		| pure_boolean_data
-		| VARIABLE
-		| VARIABLE PLUS numeric_data
-		| VARIABLE MINUS numeric_data
-		| VARIABLE DIV numeric_data
-		| VARIABLE TIMES numeric_data
-		| VARIABLE PLUS_EQUALS numeric_data
-		;
+asignation  ::= ASIGNATOR possible_values:v
+            {: RESULT=v; :}
+        ;
+possible_values ::= pure_numeric_data:v
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(v);
+                RESULT=mutable;
+            :}
+        | pure_numeric_data:n1 PLUS:o numeric_data:n2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(n1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.PLUS));
+                mutable.getSymbols().add(n2);
+                RESULT=mutable;
+            :}
+	| pure_numeric_data:n1 MINUS:o numeric_data:n2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(n1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.MINUS));
+                mutable.getSymbols().add(n2);
+                RESULT=mutable;
+            :}
+	| pure_numeric_data:n1 DIV:o numeric_data:n2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(n1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.DIV));
+                mutable.getSymbols().add(n2);
+                RESULT=mutable;
+            :}
+	| pure_numeric_data:n1 TIMES:o numeric_data:n2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(n1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.TIMES));
+                mutable.getSymbols().add(n2);
+                RESULT=mutable;
+            :}
+	| pure_string_data:v
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(v);
+                RESULT=mutable;
+            :}
+	| pure_boolean_data:v
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(v);
+                RESULT=mutable;
+            :}
+	| VARIABLE:v
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                RESULT=mutable;
+            :}
+	| VARIABLE:v PLUS:o numeric_data:n
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.PLUS));
+                mutable.getSymbols().add(n);
+                RESULT=mutable;
+            :}
+	| VARIABLE:v MINUS:o numeric_data:n
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.MINUS));
+                mutable.getSymbols().add(n);
+                RESULT=mutable;
+            :}
+	| VARIABLE:v DIV:o numeric_data:n
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.DIV));
+                mutable.getSymbols().add(n);
+                RESULT=mutable;
+            :}
+	| VARIABLE:v TIMES:o numeric_data:n
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.TIMES));
+                mutable.getSymbols().add(n);
+                RESULT=mutable;
+            :}
+        | error {:
+                    report_error("Se esperaba un valor para asignar", cur_err_token());
+                :}
+	;
 
 /*--------------CONDICIONALES -------------------*/
-condition ::= pure_boolean_data EQUALS boolean_data
-		| pure_boolean_data DIFFERENT boolean_data
-        | pure_string_data EQUALS string_data
-		| pure_string_data DIFFERENT string_data
-		| pure_numeric_data EQUALS numeric_data
-        | pure_numeric_data DIFFERENT numeric_data
-        | pure_numeric_data MAYOR numeric_data
-        | pure_numeric_data MAYOR_EQUALS numeric_data
-        | pure_numeric_data MENOR numeric_data
-        | pure_numeric_data MENOR_EQUALS numeric_data
-        | VARIABLE EQUALS pure_string_data
-        | VARIABLE EQUALS pure_numeric_data
-        | VARIABLE EQUALS VARIABLE
-        | VARIABLE EQUALS pure_boolean_data
-        | VARIABLE DIFFERENT pure_string_data
-        | VARIABLE DIFFERENT pure_numeric_data
-        | VARIABLE DIFFERENT VARIABLE
-        | VARIABLE DIFFERENT pure_boolean_data
-        | VARIABLE MAYOR numeric_data
-        | VARIABLE MAYOR_EQUALS numeric_data
-        | VARIABLE MENOR numeric_data
-        | VARIABLE MENOR_EQUALS numeric_data
+condition ::= pure_boolean_data:b1 EQUALS:o boolean_data:b2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(b1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.EQUALS));
+                mutable.getSymbols().add(b2);
+                RESULT=mutable;
+            :}
+	| pure_boolean_data:b1 DIFFERENT:o boolean_data:b2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(b1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.DIFFERENT));
+                mutable.getSymbols().add(b2);
+                RESULT=mutable;
+            :}
+        | pure_string_data:v1 EQUALS:o string_data:v2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(v1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.EQUALS));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+	| pure_string_data:v1 DIFFERENT:o string_data:v2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(v1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.DIFFERENT));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+	| pure_numeric_data:v1 EQUALS:o numeric_data:v2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(v1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.EQUALS));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | pure_numeric_data:v1 DIFFERENT:o numeric_data:v2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(v1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.DIFFERENT));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | pure_numeric_data:v1 MAYOR:o numeric_data:v2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(v1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.MAYOR));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | pure_numeric_data:v1 MAYOR_EQUALS:o numeric_data:v2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(v1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.MAYOR_EQUALS));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | pure_numeric_data:v1 MENOR:o numeric_data:v2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(v1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.MENOR));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | pure_numeric_data:v1 MENOR_EQUALS:o numeric_data:v2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(v1);
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.MENOR_EQUALS));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | VARIABLE:v EQUALS:o pure_string_data:v2
+            {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.EQUALS));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | VARIABLE:v EQUALS:o pure_numeric_data:v2
+             {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.EQUALS));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | VARIABLE:v EQUALS:o VARIABLE:v2
+             {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.EQUALS));
+                mutable.getSymbols().add(symbol(v2left, v2right, v2, sym.VARIABLE));
+                RESULT=mutable;
+            :}
+        | VARIABLE:v EQUALS:o pure_boolean_data:v2
+             {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.EQUALS));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | VARIABLE:v DIFFERENT:o pure_string_data:v2
+             {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.DIFFERENT));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | VARIABLE:v DIFFERENT:o pure_numeric_data:v2
+             {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.DIFFERENT));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | VARIABLE:v DIFFERENT:o VARIABLE:v2
+             {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.DIFFERENT));
+                mutable.getSymbols().add(symbol(v2left, v2right, v2, sym.VARIABLE));
+                RESULT=mutable;
+            :}
+        | VARIABLE:v DIFFERENT:o pure_boolean_data:v2
+             {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.DIFFERENT));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | VARIABLE:v MAYOR:o numeric_data:v2
+             {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.MAYOR));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | VARIABLE:v MAYOR_EQUALS:o numeric_data:v2
+             {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.MAYOR_EQUALS));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | VARIABLE:v MENOR:o numeric_data:v2
+             {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.MENOR));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | VARIABLE:v MENOR_EQUALS:o numeric_data:v2
+             {:
+                MutableValue mutable = new MutableValue();
+                mutable.getSymbols().add(symbol(vleft, vright, v, sym.VARIABLE));
+                mutable.getSymbols().add(symbol(oleft, oright, o, sym.MENOR_EQUALS));
+                mutable.getSymbols().add(v2);
+                RESULT=mutable;
+            :}
+        | error {:
+                    report_error("Se esperaba una condicion ", cur_err_token());
+                :}
         ;
 
 /*--------------IF INSTRUCTION -------------------*/
-if_block ::= if_stmt LLAVE_L internal_block LLAVE_R else_block  ;
-if_stmt ::= IF PARENTESIS_L condition PARENTESIS_R ;
+if_block ::= if_stmt:stm else_block:list
+            {:
+                stm.setElseStmt(list);
+                project.getData().add(stm);
+            :}
+            ;
+if_stmt ::= IF PARENTESIS_L condition:mutval PARENTESIS_R LLAVE_L internal_block:list LLAVE_R
+            {:
+                IfStmt stmt = new IfStmt();
+                stmt.setExecutables(list);
+                stmt.setCondition(mutval);
+                RESULT = stmt;
+                executablesList = new ArrayList();
+            :}
+        ;
 
-else_block ::= ELSE LLAVE_L internal_block LLAVE_R
+else_block ::= ELSE LLAVE_L internal_block:list LLAVE_R
+            {:
+                RESULT = list;
+                executablesList = new ArrayList();
+            :}
 	| /*empty*/
 	;
 
 /*--------------FOR INSTRUCTION -------------------*/
-for_block ::= for_stmt LLAVE_L internal_block LLAVE_R   ;
-for_stmt ::= FOR PARENTESIS_L variable_definition DOT_COMA condition DOT_COMA optional_increment PARENTESIS_R ;
+for_block ::= for_stmt:stmt LLAVE_L internal_block:list LLAVE_R
+            {:
+                stmt.setExecutables(list);
+                project.getData().add(stmt);
+                executablesList = new ArrayList();
+            :}
+        ;
+for_stmt ::= FOR PARENTESIS_L variable_definition:d DOT_COMA condition:c DOT_COMA optional_increment:inc PARENTESIS_R
+            {:
+                ForStmt stmt  = new ForStmt();
+                stmt.setFirstAsign(d);
+                stmt.setIncrement(inc);
+                stmt.setCondition(c);
+                RESULT = stmt;
+            :}
+        ;
 
-variable_definition ::= VARIABLE asignation
-		| /* emtpy */
-		;
-optional_increment ::= variable_statement
-		| /* empty */
-		;
+variable_definition ::= VARIABLE:v asignation:a
+            {:
+                Asignation asign = new Asignation();
+                asign.setVariable(symbol(vleft, vright, v, sym.VARIABLE));
+                asign.setValue(a);
+                RESULT = asign;
+            :}
+        | /* emtpy */
+	;
+optional_increment ::= variable_statement:asign
+            {:
+                RESULT = asign;
+            :}
+	| /* empty */
+	;
 
 /*--------------WHILE INSTRUCTION -------------------*/
-while_block ::= while_statement LLAVE_L internal_block LLAVE_R  ;
-while_statement ::= WHILE PARENTESIS_L condition PARENTESIS_R   ;
+while_block ::= while_statement:mut LLAVE_L internal_block:list LLAVE_R
+            {:
+                WhileStmt stmt = new WhileStmt();
+                stmt.setCondition(mut);
+                stmt.setExecutables(list);
+                project.getData().add(stmt);
+                executablesList = new ArrayList();
+            :}
+        ;
+while_statement ::= WHILE PARENTESIS_L condition:c PARENTESIS_R
+            {:
+                RESULT = c;
+            :}
+        ;
 
 /*--------------DO-WHILE INSTRUCTION -------------------*/
-do_while_block ::= DO LLAVE_L internal_block LLAVE_R while_statement DOT_COMA   ;
+do_while_block ::= DO LLAVE_L internal_block:list LLAVE_R while_statement:mut DOT_COMA
+            {:
+                DoWhileStmt stmt = new DoWhileStmt();
+                stmt.setCondition(mut);
+                stmt.setExecutables(list);
+                project.getData().add(stmt);
+                executablesList = new ArrayList();
+            :}
+        ;

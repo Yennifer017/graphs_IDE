@@ -1,7 +1,10 @@
 package compi1.ide.elements.data
 
+import compi1.ide.elements.others.MutableValue
+import java_cup.runtime.Symbol
+
 class DataPastel {
-    var label:String = ""
-    var value:Float = 0F
-    var color:String = "#000000"
+    var label:Symbol? = null;
+    var value:MutableValue? = null;
+    var color:Symbol? = null;
 }

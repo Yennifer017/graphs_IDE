@@ -1,8 +1,8 @@
 package compi1.ide.elements.chart
 
-import compi1.ide.elements.DataContainer
 import compi1.ide.elements.data.DataPuntos
+import compi1.ide.elements.data.DataContainer
 
 class ChartPuntos: DataContainer() {
-    var listData = arrayListOf<DataPuntos>()
+    var dataPuntos: List<DataPuntos> = ArrayList()
 }

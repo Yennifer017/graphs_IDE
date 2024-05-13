@@ -7,4 +7,6 @@
     <string name="close">Close</string>
     <string name="output_button">output button</string>
     <string name="lineAndCol">C0:L0</string>
+    <string name="outputTitle">OUTPUT</string>
+    <string name="clearConsolee">Limpiar</string>
 </resources>

@@ -1,8 +1,10 @@
 package compi1.ide.elements.data
 
-class DataBarras {
-    var category:String? = null;
-    var value:Float = 0F;
-    var color:String = "#000000";
+import compi1.ide.elements.others.MutableValue
+import java_cup.runtime.Symbol
 
+class DataBarras {
+    var category: Symbol? = null;
+    var value:MutableValue? = null;
+    var color: Symbol? = null;
 }

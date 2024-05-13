@@ -1,14 +1,19 @@
 package compi1.ide.elements
 
-class Project {
-    var title:String? = null;
-    var description:String? = null;
-    var listaString = arrayListOf<String>()
-    var header:String? = null;
-    var footer:String? = null;
-    var backgroundColor:String? = null;
-    var fontFamilyS:String? = null;
-    var fontSize:String? = null;
+import java_cup.runtime.Symbol
 
-    var acctions = arrayListOf<DataContainer>()
+
+class Project {
+    var title:Symbol? = null
+    var description:Symbol? = null
+    var header:Symbol? = null
+    var footer:Symbol? = null
+    var backgroundColor:Symbol? = null
+    var fontFamilyS:Symbol? = null
+    var fontSizeS:Symbol? = null
+
+    var keyWords:List<Symbol> = ArrayList()
+    var data:List<Executable> = ArrayList()
+    private val globalSymbolTable: HashMap<String, Any> = HashMap()
+
 }
