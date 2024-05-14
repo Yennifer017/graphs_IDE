@@ -12,4 +12,11 @@ class InformationTarget: Executable() {
     var icon:Symbol? = null;
     var color:Symbol? = null;
     var link:Symbol? = null;
+    override fun execute(
+        globalTable: HashMap<String, Any>,
+        internalTable: HashMap<String, Any>?,
+        semanticErrors: ArrayList<String>
+    ): String {
+        return "codigo de una tarjeta de informacion"
+    }
 }

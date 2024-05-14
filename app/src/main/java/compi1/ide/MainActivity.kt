@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity() {
         //button actions
         val executeBtn = findViewById<Button>(R.id.executeBtn)
         executeBtn.setOnClickListener{
-            var output = traductor.analizate(editText.text.toString())
+            val output = traductor.analizate(editText.text.toString())
             OutputActivity.display = output
         }
 
@@ -72,7 +72,6 @@ class MainActivity : AppCompatActivity() {
     override fun onResume(){
         super.onResume()
         //setting current text
-        Log.d("contenido del backoup", backupContent)
         var editText = findViewById<CustomEditText>(R.id.inputCode)
         editText.setText(backupContent)
     }

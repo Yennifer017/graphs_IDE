@@ -769,7 +769,7 @@ internal_block ::= chart_creation:e internal_block
             }
             RESULT=executablesList;
         :}
-    | variable_statement:v internal_block
+    | variable_statement:v DOT_COMA internal_block
         {:
             //add the executable to the list
             executablesList.add(0, v);
