@@ -53,7 +53,7 @@ class HtmlGen {
                 "  <script type=\"text/javascript\">\n" +
                 "\n" +
                 "    // Load the Visualization API and the corechart package.\n" +
-                "    google.charts.load('current', { 'packages': ['corechart'] });\n"
+                "    google.charts.load('current', { 'packages': ['table', 'corechart'] });\n"
     }
 
     fun getCallBackFunctions(number:Int):String{

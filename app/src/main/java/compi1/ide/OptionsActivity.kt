@@ -59,6 +59,13 @@ class OptionsActivity : AppCompatActivity() {
             activityResultLauncher.launch(Intent.createChooser(intent, "Selecciona un proyecto"))
         }
 
+        val exportPdfBtn = findViewById<Button>(R.id.exportPdfBtn)
+        exportPdfBtn.setOnClickListener{
+            val intent = Intent(this, MainActivity::class.java)
+            intent.putExtra("pdf", "pdf")
+            startActivity(intent)
+        }
+
 
     }
 }

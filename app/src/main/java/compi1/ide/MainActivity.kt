@@ -72,6 +72,13 @@ class MainActivity : AppCompatActivity() {
             backupContent = content
         }
 
+        //exportation
+        val message = bundle?.getString("pdf")
+        if(message != null){
+            val output = traductor.exportPdf(backupContent, this)
+            //val output = traductor.analizate(editText.text.toString(), this)
+            OutputActivity.display = output
+        }
     }
 
     override fun onResume(){

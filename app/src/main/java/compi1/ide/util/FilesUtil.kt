@@ -1,16 +1,23 @@
 package compi1.ide.util
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.Toast
+import com.itextpdf.text.Document
+import com.itextpdf.text.html.simpleparser.HTMLWorker
+import com.itextpdf.text.pdf.PdfWriter
 import java.io.BufferedReader
 import java.io.File
-import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStreamReader
-import java.io.Serializable
+import java.io.StringReader
 
 
 class FilesUtil{
@@ -76,6 +83,49 @@ class FilesUtil{
                     Toast.makeText(context, "El archivo ya existe", Toast.LENGTH_SHORT).show()
                 }
                 archivo.writeText(texto) // Escribir el texto en el archivo
+            } catch (e: IOException) {
+                Toast.makeText(context, "Error al crear el archivo", Toast.LENGTH_SHORT).show()
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun generatePdf(fileName:String, content:String, context: Context){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val archivo = File(context.getExternalFilesDir(null), fileName)
+            try {
+                if (!archivo.exists()) {
+                    /*val document = Document()
+                    PdfWriter.getInstance(document, FileOutputStream(archivo))
+                    document.open()
+                    val htmlWorker = HTMLWorker(document)
+                    htmlWorker.parse(StringReader(content))
+                    document.close();
+                    Toast.makeText(context, "ARCHIVO CREADO", Toast.LENGTH_SHORT).show()*/
+                } else {
+                    Toast.makeText(context, "El archivo ya existe", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: IOException) {
+                Toast.makeText(context, "Error al exportar", Toast.LENGTH_SHORT).show()
+                e.printStackTrace()
+            }
+        } else {
+            val path = Environment.getExternalStorageDirectory().absolutePath + "/" + fileName
+            val archivo = File(path)
+            try {
+                if (!archivo.exists()) {
+
+                    val document = Document()
+                    PdfWriter.getInstance(document, FileOutputStream(archivo))
+                    document.open()
+                    val htmlWorker = HTMLWorker(document)
+                    htmlWorker.parse(StringReader(content))
+                    document.close()
+
+                    Toast.makeText(context, "ARCHIVO CREADO", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "El archivo ya existe", Toast.LENGTH_SHORT).show()
+                }
             } catch (e: IOException) {
                 Toast.makeText(context, "Error al crear el archivo", Toast.LENGTH_SHORT).show()
                 e.printStackTrace()

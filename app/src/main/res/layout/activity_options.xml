@@ -27,4 +27,14 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@android:drawable/btn_dialog" />
+
+    <Button
+        android:id="@+id/exportPdfBtn"
+        android:layout_width="159dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="20dp"
+        android:text="@string/exportBtnTxt"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/openFileBtn" />
 </androidx.constraintlayout.widget.ConstraintLayout>

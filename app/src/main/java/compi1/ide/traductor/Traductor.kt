@@ -54,6 +54,41 @@ class Traductor {
         return code
     }
 
+    fun exportPdf(text: String, context: Context):String{
+        val lexer = Lexer(StringReader(text))
+        val parser = parser(lexer)
+        try {
+            parser.parse()
+            if (lexer.errors.isEmpty() && parser.syntaxErrors.isEmpty()) {
+                val project = parser.project
+                try {
+                    val code = project.getCode()
+                    val name = project.title!!.value.toString().replace(" ", "") + ".pdf"
+                    Log.d("codigo generado", code)
+                    //filesUtil.createFile(name, code, context)
+                    filesUtil.generatePdf(name, code, context)
+                    return("Exportacion exitosa")
+                } catch (e: SemanticException) {
+                    return("ERRORES SEMANTICOS\n" + getErrors(project.semanticErrors))
+                } catch (e: Exception){
+                    e.printStackTrace()
+                    return("Error: ${e.message}")
+                }
+            } else {
+                var output: String = "ERRORES LEXICOS\n"
+                output += getErrors(lexer.errors)
+
+                output += "\n\nERRORES SINTACTICOS\n"
+                output += getErrors(parser.syntaxErrors)
+
+                return output
+            }
+        } catch (e: Exception) {
+            return "Ocurrio un error fatal al tratar de exportar :/\n" + e.toString()
+            e.printStackTrace()
+        }
+    }
+
 
 
 }
