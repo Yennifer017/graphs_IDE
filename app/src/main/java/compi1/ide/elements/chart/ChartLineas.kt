@@ -17,7 +17,7 @@ class ChartLineas: DataContainer(){
         code += getData(globalTable, internalTable, semanticErrors)
         code += "]);\n"
         code += ""
-        return "//grafica de lineas aqui"
+        return ""
     }
 
     private fun getColumns():String{
