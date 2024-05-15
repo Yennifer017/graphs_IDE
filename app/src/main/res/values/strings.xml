@@ -13,4 +13,5 @@
     <string name="exportBtnTxt">Exportar pfd</string>
     <string name="identationBtnTxt">IdentarCodigo</string>
     <string name="colorIdeBtnTxt">Colorear ide</string>
+    <string name="saveProject">Guardar Proyecto</string>
 </resources>

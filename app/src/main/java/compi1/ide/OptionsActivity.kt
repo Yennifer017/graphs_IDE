@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageButton
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
@@ -73,6 +74,14 @@ class OptionsActivity : AppCompatActivity() {
             val intent = Intent(this, MainActivity::class.java)
             intent.putExtra("pdf", "pdf")
             startActivity(intent)
+        }
+
+        //guardar proyecto
+        val saveProjectBtn = findViewById<Button>(R.id.saveProject)
+        saveProjectBtn.setOnClickListener{
+            val text = MainActivity.backupContent
+            val nameFile = findViewById<EditText>(R.id.nameFileInput).text.toString().replace(" ", "") + ".gh"
+            filesUtil.createFile(nameFile, text, this)
         }
 
 
