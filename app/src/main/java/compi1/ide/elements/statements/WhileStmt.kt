@@ -12,13 +12,16 @@ class WhileStmt:Statement() {
         internalTable: HashMap<String, Any>?,
         semanticErrors: ArrayList<String>
     ): String {
+        var graphsCode = ""
         try {
             val currentSymbolTable:HashMap<String, Any> = HashMap()
             var result = if(condition != null) condition!!.getConditionData(globalTable, currentSymbolTable, semanticErrors)
                         else false;
             while(result){
                 for (i in executables.indices) {
-                    Log.d("respuesta desde un while", executables.get(i).execute(globalTable, internalTable, semanticErrors))
+                    executables.get(i).index = this.index
+                    graphsCode += executables.get(i).execute(globalTable, internalTable, semanticErrors)
+                    //Log.d("respuesta desde un while", executables.get(i).execute(globalTable, internalTable, semanticErrors))
                 }
                 result = if(condition != null) condition!!.getConditionData(globalTable, currentSymbolTable, semanticErrors)
                         else false;
@@ -26,7 +29,7 @@ class WhileStmt:Statement() {
         } catch (e: Exception){
             semanticErrors.add("No se pudo ejecutar un while")
         }
-        return ""
+        return graphsCode
     }
 
 }

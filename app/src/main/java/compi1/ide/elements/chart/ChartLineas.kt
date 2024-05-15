@@ -10,6 +10,6 @@ class ChartLineas: DataContainer(){
         internalTable: HashMap<String, Any>?,
         semanticErrors: ArrayList<String>
     ): String {
-        return "codigo de una grafica de lineas"
+        return "//codigo de una grafica de lineas aqui"
     }
 }

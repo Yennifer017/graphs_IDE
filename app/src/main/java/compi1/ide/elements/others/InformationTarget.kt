@@ -17,6 +17,6 @@ class InformationTarget: Executable() {
         internalTable: HashMap<String, Any>?,
         semanticErrors: ArrayList<String>
     ): String {
-        return "codigo de una tarjeta de informacion"
+        return "//codigo de una tarjeta de informacion"
     }
 }

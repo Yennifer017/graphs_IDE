@@ -12,12 +12,15 @@ class DoWhileStmt:Statement() {
         internalTable: HashMap<String, Any>?,
         semanticErrors: ArrayList<String>
     ): String {
+        var codeGraphs = ""
         try {
             val currentSymbolTable:HashMap<String, Any> = HashMap()
             var result = true
             do {
                 for (i in executables.indices) {
-                    Log.d("respuesta desde un while", executables.get(i).execute(globalTable, internalTable, semanticErrors))
+                    executables.get(i).index = this.index
+                    codeGraphs += executables.get(i).execute(globalTable, internalTable, semanticErrors)
+                    //Log.d("respuesta desde un while", executables.get(i).execute(globalTable, internalTable, semanticErrors))
                 }
                 result = if(condition != null) condition!!.getConditionData(globalTable, currentSymbolTable, semanticErrors)
                                     else false;
@@ -25,7 +28,7 @@ class DoWhileStmt:Statement() {
         } catch (e: Exception){
             semanticErrors.add("No se pudo ejecutar un while")
         }
-        return "";
+        return codeGraphs;
     }
 
 }

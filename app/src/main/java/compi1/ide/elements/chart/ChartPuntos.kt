@@ -10,6 +10,6 @@ class ChartPuntos: DataContainer() {
         internalTable: HashMap<String, Any>?,
         semanticErrors: ArrayList<String>
     ): String {
-        return "codigo de una grafica de puntos"
+        return "//codigo de una grafica de puntos"
     }
 }

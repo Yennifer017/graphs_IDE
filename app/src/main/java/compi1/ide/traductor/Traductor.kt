@@ -1,5 +1,6 @@
 package compi1.ide.traductor
 
+import android.util.Log
 import compi1.ide.code_analysis.Lexer
 import compi1.ide.code_analysis.parser
 import compi1.ide.elements.exceptions.SemanticException
@@ -15,7 +16,9 @@ class Traductor {
             if (lexer.errors.isEmpty() && parser.syntaxErrors.isEmpty()) {
                 val project = parser.project
                 try {
-                    return(project.getCode())
+                    val code = project.getCode()
+                    Log.d("codigo generado", code)
+                    return("Exportacion exitosa")
                 } catch (e: SemanticException) {
                     return("ERRORES SEMANTICOS\n" + getErrors(project.semanticErrors))
                 } catch (e: Exception){

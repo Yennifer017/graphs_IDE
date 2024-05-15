@@ -974,7 +974,7 @@ public class Lexer implements java_cup.runtime.Scanner {
                     return symbol(sym.RIGHT, reading);
                 } else if (reading.equals("left")){
                     return symbol(sym.LEFT, reading);
-                } else if(reading.matches("#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})")){
+                } else if(reading.matches("#[A-Fa-f0-9]{6}")){
                     return symbol(sym.HEX_COLOR, reading);
                 } else {
                     return symbol(sym.STRING, reading);
