@@ -2,7 +2,6 @@ package compi1.ide
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
@@ -10,8 +9,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import compi1.ide.code_analysis.IdentationLexer
 import compi1.ide.traductor.Traductor
 import compi1.ide.util.FilesUtil
+import java.io.StringReader
 
 
 class MainActivity : AppCompatActivity() {
@@ -78,6 +79,18 @@ class MainActivity : AppCompatActivity() {
             val output = traductor.exportPdf(backupContent, this)
             //val output = traductor.analizate(editText.text.toString(), this)
             OutputActivity.display = output
+        }
+
+        val ident = bundle?.getString("ident")
+        if(ident != null){
+            val reader = StringReader(backupContent)
+            val lexer = IdentationLexer(reader)
+            while (!lexer.yyatEOF()) {
+                lexer.yylex()
+            }
+            val text = lexer.string.toString()
+            backupContent = text
+            editText.setText(text)
         }
     }
 

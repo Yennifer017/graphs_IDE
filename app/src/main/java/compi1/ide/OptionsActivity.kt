@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toFile
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import compi1.ide.code_analysis.IdentationLexer
 import compi1.ide.util.FilesUtil
 
 
@@ -52,6 +53,14 @@ class OptionsActivity : AppCompatActivity() {
                     }
                 }
         }
+        //identar
+        val identBtn = findViewById<Button>(R.id.identationBtn)
+        identBtn.setOnClickListener{
+            val intent = Intent(this, MainActivity::class.java)
+            intent.putExtra("ident", "ident")
+            startActivity(intent)
+        }
+
         val openFileBtn = findViewById<Button>(R.id.openFileBtn)
         openFileBtn.setOnClickListener{
             val intent = Intent(Intent.ACTION_GET_CONTENT)

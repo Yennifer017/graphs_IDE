@@ -13,9 +13,11 @@ class CustomEditText(context: Context, attrs: AttributeSet) : AppCompatEditText(
     override fun onSelectionChanged(selStart: Int, selEnd: Int) {
         super.onSelectionChanged(selStart, selEnd)
         try {
-            val lineNumber = this.layout.getLineForOffset(this.selectionStart)
+            var lineNumber = this.layout.getLineForOffset(this.selectionStart)
             val startOfLine = this.layout.getLineStart(lineNumber)
-            val columnNumber = this.selectionStart - startOfLine
+            var columnNumber = this.selectionStart - startOfLine
+            lineNumber++
+            columnNumber++
             val message = "C$columnNumber:L$lineNumber"
             textView?.text = message
         } catch (e: NullPointerException) {
