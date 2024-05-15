@@ -22,6 +22,7 @@ import compi1.ide.util.FilesUtil
 
 class OptionsActivity : AppCompatActivity() {
 
+    val filesUtil = FilesUtil()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -42,19 +43,11 @@ class OptionsActivity : AppCompatActivity() {
                 if (result.resultCode == RESULT_OK) { //acciones que se realizan cuando el usuario selecciona el archivo
                     val selectedFileUri = result.data?.data
                     val selectedFilePath = selectedFileUri?.let { uri ->
-                        val contentResolver = this.contentResolver
-                        val cursor = contentResolver.query(uri, null, null, null, null)
-                        cursor?.let {
-                            it.moveToFirst()
-                            val columnIndex = it.getColumnIndex(MediaStore.Images.ImageColumns.DATA)
-                            val filePath = it.getString(columnIndex)
-                            it.close()
-                            filePath
-                        }
+                        filesUtil.leerArchivo(uri, this)
                     }
                     if (selectedFilePath != null) {
                         val intent = Intent(this, MainActivity::class.java)
-                        intent.putExtra("path", selectedFilePath)
+                        intent.putExtra("content", selectedFilePath)
                         startActivity(intent)
                     }
                 }

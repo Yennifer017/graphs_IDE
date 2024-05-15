@@ -9,4 +9,5 @@
     <string name="lineAndCol">C0:L0</string>
     <string name="outputTitle">OUTPUT</string>
     <string name="clearConsolee">Limpiar</string>
+    <string name="clearBtnDescription">Clear content button</string>
 </resources>

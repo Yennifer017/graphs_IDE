@@ -19,7 +19,7 @@ class ChartPastel: DataContainer() {
         code += "data.addRows([\n"
         for (i in dataPastel.indices) {
             val data = dataPastel.get(i)
-            code += "[" + dataCollector.getData(data.label, globalTable, internalTable, semanticErrors)
+            code += "['" + dataCollector.getData(data.label, globalTable, internalTable, semanticErrors) + "'"
             code += "," + data.value?.getNumericOperableData(globalTable, internalTable, semanticErrors)
             code += "]"
             if(i != dataPastel.size -1){
@@ -27,19 +27,19 @@ class ChartPastel: DataContainer() {
             }
             code += "\n"
             //colors
-            colorCodes += if(data.color == null) "'#000000'"
+            colorCodes += if(data.color == null) "'#000000'";
                 else "'" + dataCollector.getColor(data.color, globalTable, internalTable, semanticErrors) + "'"
             colorCodes += if(i != dataPastel.size -1 ) "," else ""
         }
         code += "]);\n"
         code += "var options = {"
-        if(leyenda != null){
-            code += "'title': " + dataCollector.getData(leyenda!!.title, globalTable, internalTable, semanticErrors) + ","
+        if(leyenda != null && leyenda?.title != null){
+            code += "'title': '" + dataCollector.getData(leyenda!!.title, globalTable, internalTable, semanticErrors) + "',"
         }
         code += "'colors':[$colorCodes]\n"
         code += "};\n"
         code += "var chart = new google.visualization.PieChart(document.getElementById('div_d${index.current}'));\n"
-        code += "chart.draw(data, options);\n}"
+        code += "chart.draw(data, options);\n}\n"
         index.increment()
         return code
     }

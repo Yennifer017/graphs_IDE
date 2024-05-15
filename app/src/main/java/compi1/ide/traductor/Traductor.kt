@@ -1,14 +1,17 @@
 package compi1.ide.traductor
 
+import android.content.Context
 import android.util.Log
 import compi1.ide.code_analysis.Lexer
 import compi1.ide.code_analysis.parser
 import compi1.ide.elements.exceptions.SemanticException
+import compi1.ide.util.FilesUtil
 import java.io.StringReader
 
 
 class Traductor {
-    fun analizate(text: String): String{
+    val filesUtil = FilesUtil()
+    fun analizate(text: String, context: Context): String{
         val lexer = Lexer(StringReader(text))
         val parser = parser(lexer)
         try {
@@ -17,7 +20,9 @@ class Traductor {
                 val project = parser.project
                 try {
                     val code = project.getCode()
+                    val name = project.title!!.value.toString().replace(" ", "") + ".html"
                     Log.d("codigo generado", code)
+                    filesUtil.createFile(name, code, context)
                     return("Exportacion exitosa")
                 } catch (e: SemanticException) {
                     return("ERRORES SEMANTICOS\n" + getErrors(project.semanticErrors))
@@ -48,6 +53,7 @@ class Traductor {
         }
         return code
     }
+
 
 
 }

@@ -7,6 +7,7 @@ class HtmlGen {
     fun getInitialCode(project:Project):String{
         return "<html>\n" +
                 "<head>\n" +
+                "  <meta charset= \"utf-8\">\n" +
                 "  <!--Styles-->\n" +
                 "  <style>\n" +
                 "    * {\n" +

@@ -175,11 +175,11 @@ class MutableValue {
         val first:Int =  symbols.get(0).sym
         val second:Int = symbols.get(2).sym
         val firstValue = if(first == sym.VARIABLE)
-            getValueFromVar(symbols.get(0).toString(), globalTable, internalTable, semanticErrors)
-        else symbols.get(0).value
+            getValueFromVar(symbols.get(0).value.toString(), globalTable, internalTable, semanticErrors)
+            else symbols.get(0).value
         val secondValue = if(second == sym.VARIABLE)
-            getValueFromVar(symbols.get(1).toString(), globalTable, internalTable, semanticErrors)
-        else symbols.get(1).value
+            getValueFromVar(symbols.get(2).value.toString(), globalTable, internalTable, semanticErrors)
+            else symbols.get(2).value
         val type = symbols.get(1).sym
         when (type) {
             sym.PLUS -> {
@@ -380,7 +380,7 @@ class MutableValue {
 
     private fun saveError(semanticErrors: ArrayList<String>, symbolError:Symbol, message:String ){
         semanticErrors.add(message
-                + symbolError.value + " linea:" + symbolError.left + " columna" + symbolError.right)
+                + "-" + symbolError.value + " linea:" + symbolError.left + " columna:" + symbolError.right)
     }
 
 

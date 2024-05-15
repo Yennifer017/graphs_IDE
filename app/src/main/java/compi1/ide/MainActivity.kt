@@ -53,20 +53,25 @@ class MainActivity : AppCompatActivity() {
         //button actions
         val executeBtn = findViewById<Button>(R.id.executeBtn)
         executeBtn.setOnClickListener{
-            val output = traductor.analizate(editText.text.toString())
+            val output = traductor.analizate(editText.text.toString(), this)
             OutputActivity.display = output
         }
 
-        //files
-        var bundle = intent.extras
-        //abrir el archivo
-        val path = bundle?.getString("path")
-        if (path != null) {
-            println("Se ha encontrado un path")
-            filesUtil.currentPath = path
-            println(path)
-            editText.setText(filesUtil.readFromFile(this, path))
+        val clear = findViewById<ImageButton>(R.id.clearBtn)
+        clear.setOnClickListener{
+            backupContent = ""
+            editText.setText("")
         }
+
+        //files
+        val bundle = intent.extras
+        //abrir el archivo
+        val content = bundle?.getString("content")
+        if (content != null) {
+            editText.setText(content)
+            backupContent = content
+        }
+
     }
 
     override fun onResume(){

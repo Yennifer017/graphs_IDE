@@ -37,7 +37,7 @@ class DataCollector {
         internalTable: HashMap<String, Any>?,
         semanticErrors: ArrayList<String>):String {
         if(symbol == null){
-            semanticErrors.add("Simbolo nulo, no se pudo recuperar el dato")
+            semanticErrors.add("Simbolo nulo, no se pudo recuperar el dato de un color")
             return "#0000000"
         } else {
             val colorRegex:Regex = Regex("#[A-Fa-f0-9]{6}")
