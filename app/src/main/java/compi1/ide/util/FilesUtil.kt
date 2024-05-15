@@ -1,13 +1,9 @@
 package compi1.ide.util
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.widget.Toast
 import com.itextpdf.text.Document
 import com.itextpdf.text.html.simpleparser.HTMLWorker
@@ -95,13 +91,13 @@ class FilesUtil{
             val archivo = File(context.getExternalFilesDir(null), fileName)
             try {
                 if (!archivo.exists()) {
-                    /*val document = Document()
+                    val document = Document()
                     PdfWriter.getInstance(document, FileOutputStream(archivo))
                     document.open()
                     val htmlWorker = HTMLWorker(document)
                     htmlWorker.parse(StringReader(content))
                     document.close();
-                    Toast.makeText(context, "ARCHIVO CREADO", Toast.LENGTH_SHORT).show()*/
+                    Toast.makeText(context, "ARCHIVO CREADO", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(context, "El archivo ya existe", Toast.LENGTH_SHORT).show()
                 }
@@ -121,6 +117,10 @@ class FilesUtil{
                     val htmlWorker = HTMLWorker(document)
                     htmlWorker.parse(StringReader(content))
                     document.close()
+
+                    val htmlFile = File("file:///android_asset/graficas.html")
+                    val pdfFile = File(Environment.getExternalStorageDirectory(), "graficas.pdf")
+
 
                     Toast.makeText(context, "ARCHIVO CREADO", Toast.LENGTH_SHORT).show()
                 } else {

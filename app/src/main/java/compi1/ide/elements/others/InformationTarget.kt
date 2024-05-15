@@ -21,7 +21,7 @@ class InformationTarget: Executable() {
         semanticErrors: ArrayList<String>
     ): String {
         val code = StringBuilder()
-        code.append("function d5() {\n")
+        code.append("function d${index.current}() {\n")
         code.append("var data = new google.visualization.DataTable();\n")
         code.append("data.addColumn('string', 'Tarjeta de Informacion');\n")
         code.append("data.addRows([\n")
@@ -29,26 +29,26 @@ class InformationTarget: Executable() {
         if(value == null){
             semanticErrors.add("Le falta el valor a la tarjeta de informacion - linea:" + line + " columna:" + column)
         } else {
-            code.append("'VALOR: ${value!!.getNumericOperableData(globalTable, internalTable, semanticErrors)}'")
+            code.append("['VALOR: ${value!!.getNumericOperableData(globalTable, internalTable, semanticErrors)}'],\n")
         }
 
         if(label == null){
             semanticErrors.add("Le falta el label a la tarjeta de informacion - linea:" + line + " columna:" + column)
         } else {
-            code.append("'LABEL: ${dataCollector.getData(label, globalTable, internalTable, semanticErrors)}'")
+            code.append("['LABEL: ${dataCollector.getData(label, globalTable, internalTable, semanticErrors)}'],\n")
         }
 
         if(description == null){
             semanticErrors.add("Le falta la descripcion a la tarjeta de informacion - linea:" + line + " columna:" + column)
         } else {
-            code.append("'DESCRIPCION: ${dataCollector.getData(description, globalTable, internalTable, semanticErrors)}'")
+            code.append("['DESCRIPCION: ${dataCollector.getData(description, globalTable, internalTable, semanticErrors)}']")
         }
 
         if(icon != null){
-            code.append("'ICONO: ${dataCollector.getData(icon, globalTable, internalTable, semanticErrors)}'")
+            code.append(",['ICONO: ${dataCollector.getData(icon, globalTable, internalTable, semanticErrors)}']\n")
         }
         if(link != null){
-            code.append("'LINK: ${dataCollector.getData(link, globalTable, internalTable, semanticErrors)}'")
+            code.append(",['LINK: ${dataCollector.getData(link, globalTable, internalTable, semanticErrors)}']\n")
         }
         code.append("]);\n")
         code.append("var options = {\n" +

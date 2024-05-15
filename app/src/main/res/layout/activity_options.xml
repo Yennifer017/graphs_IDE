@@ -31,10 +31,31 @@
     <Button
         android:id="@+id/exportPdfBtn"
         android:layout_width="159dp"
-        android:layout_height="48dp"
+        android:layout_height="54dp"
         android:layout_marginTop="20dp"
         android:text="@string/exportBtnTxt"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/openFileBtn" />
+
+    <Button
+        android:id="@+id/identationBtn"
+        android:layout_width="156dp"
+        android:layout_height="52dp"
+        android:layout_marginTop="20dp"
+        android:text="@string/identationBtnTxt"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/exportPdfBtn" />
+
+    <Button
+        android:id="@+id/colorsBtn"
+        android:layout_width="153dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="20dp"
+        android:text="@string/colorIdeBtnTxt"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/identationBtn" />
 </androidx.constraintlayout.widget.ConstraintLayout>

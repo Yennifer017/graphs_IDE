@@ -11,4 +11,6 @@
     <string name="clearConsolee">Limpiar</string>
     <string name="clearBtnDescription">Clear content button</string>
     <string name="exportBtnTxt">Exportar pfd</string>
+    <string name="identationBtnTxt">IdentarCodigo</string>
+    <string name="colorIdeBtnTxt">Colorear ide</string>
 </resources>
